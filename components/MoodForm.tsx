@@ -1,10 +1,17 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 const MoodForm = () => {
   const [mood, setMood] = useState("");
   const [affirmation, setAffirmation] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play();
+    }
+  }, [audioUrl]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -61,14 +68,13 @@ const MoodForm = () => {
           {audioUrl && (
             <audio
               id="affirmation-audio"
-              controls
+              ref={audioRef}
               src={audioUrl}
-              className="mx-auto mt-8"
+              className="hidden"
             ></audio>
           )}
         </>
       )}
-      {/* Add spinner CSS here */}
       <style jsx>{`
         .lds-ring {
           display: inline-block;

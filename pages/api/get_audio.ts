@@ -28,7 +28,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM",
+      "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
       requestOptions
     );
 
