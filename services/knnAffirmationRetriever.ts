@@ -127,8 +127,9 @@ class KNNAffirmationRetriever {
     }
 
 }
-
-const moodEmbeddings: MoodEmbeddings = loadMoodEmbeddings("knn_model/mood_embeddings.json");
+const isDevelopment = process.env.NODE_ENV === "development";
+const filePath = isDevelopment ? "public/knn_model/mood_embeddings.json" : "/knn_model/mood_embeddings.json";
+const moodEmbeddings: MoodEmbeddings = loadMoodEmbeddings(filePath);
 const knn = new KNNAffirmationRetriever(moodEmbeddings, moodAffirmations);
 
 export default knn;     

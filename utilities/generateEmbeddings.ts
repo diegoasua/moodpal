@@ -46,7 +46,7 @@ export const generateEmbeddings = async () => {
       const mood_embedding = response.data['data'][0]['embedding'];
       moodEmbeddings[mood] = mood_embedding;
       fs.writeFileSync(
-        'knn_model/mood_embeddings.json',
+        'public/knn_model/mood_embeddings.json',
         JSON.stringify(moodEmbeddings),
       );
     } catch (error) {
