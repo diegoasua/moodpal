@@ -1,7 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import 'dotenv/config';
 import fs from "fs";
-import path from 'path';
 
 interface DataPoint {
     features: number[];
@@ -131,8 +130,9 @@ class KNNAffirmationRetriever {
 
 const isDevelopment = process.env.NODE_ENV === "development";
 const filePath = isDevelopment
-    ? path.join(process.cwd(), 'public', 'knn_model', 'mood_embeddings.json')
-    : path.join(process.cwd(), 'knn_model', 'mood_embeddings.json');
+    ? 'public/knn_model/mood_embeddings.json'
+    : '/knn_model/mood_embeddings.json';
+console.log("path to json", filePath);
 const moodEmbeddings: MoodEmbeddings = loadMoodEmbeddings(filePath);
 const knn = new KNNAffirmationRetriever(moodEmbeddings, moodAffirmations);
 
