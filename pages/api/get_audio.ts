@@ -1,49 +1,42 @@
+import { promises as fs } from "fs";
 import { NextApiRequest, NextApiResponse } from "next";
-import fetch from "node-fetch";
+import path from "path";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void> {
-  const { text } = req.query;
-  const ELEVENLABS_KEY = process.env.ELEVENLABS_KEY as string;
+  const { affirmation } = req.query;
 
-  const requestBody = {
-    text,
-    model_id: "eleven_monolingual_v1",
-    voice_settings: {
-      stability: 0,
-      similarity_boost: 0,
-    },
-  };
-
-  const requestOptions = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": ELEVENLABS_KEY,
-    },
-    body: JSON.stringify(requestBody),
-  };
+  const moodAffirmationsPath = path.join(process.cwd(), "mood_affirmations.json");
 
   try {
-    const response = await fetch(
-      "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
-      requestOptions
-    );
+    const moodAffirmationsRaw = await fs.readFile(moodAffirmationsPath, "utf-8");
+    const moodAffirmations = JSON.parse(moodAffirmationsRaw);
 
-    if (response.status === 200) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-
-      res.setHeader("Content-Type", "audio/mpeg");
-      res.send(buffer);
-    } else if (response.status === 422) {
-      const jsonResponse = await response.json();
-      res.status(422).json(jsonResponse);
-    } else {
-      res.status(response.status).send(response.statusText);
+    let emotion = null;
+    for (const [key, value] of Object.entries(moodAffirmations)) {
+      if (value === affirmation) {
+        emotion = key;
+        break;
+      }
     }
-  } catch (error) {
-    res.status(500).send(error.message);
+
+    if (!emotion) {
+      res.status(404).send("Emotion not found");
+      return;
+    }
+    const audioPath = path.join(process.cwd(), "public", "audio", `${emotion}.mp3`);
+
+    const audioBuffer = await fs.readFile(audioPath);
+
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.send(audioBuffer);
+  } catch (error: any) {
+    if (error.code === "ENOENT") {
+      res.status(404).send("Audio file not found");
+    } else {
+      res.status(500).send(error.message);
+    }
   }
 }

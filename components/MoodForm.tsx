@@ -21,7 +21,7 @@ const MoodForm = () => {
       const res = await fetch(`/api/get_affirmation?mood=${mood}`);
       const { affirmation } = await res.json();
       setAffirmation(affirmation);
-      const audioRes = await fetch(`/api/get_audio?text=${affirmation}`);
+      const audioRes = await fetch(`/api/get_audio?affirmation=${affirmation}`);
       const audioBlob = await audioRes.blob();
       setAudioUrl(URL.createObjectURL(audioBlob));
     } catch (error) {
