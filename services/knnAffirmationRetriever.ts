@@ -1,4 +1,3 @@
-import * as tf from "@tensorflow/tfjs-node";
 import axios, { AxiosResponse } from "axios";
 import 'dotenv/config';
 import fs from "fs";
@@ -78,7 +77,7 @@ function loadMoodAffirmations(filePath: string): MoodAffirmations {
     return moodAffirmations;
 }
 
-async function moodToEmbedding(mood: string): Promise<tf.Tensor> {
+async function moodToEmbedding(mood: string): Promise<number[]> {
     const url = "https://api.openai.com/v1/embeddings";
     const headers = {
         "Content-Type": "application/json",
@@ -89,7 +88,7 @@ async function moodToEmbedding(mood: string): Promise<tf.Tensor> {
     try {
         const response: AxiosResponse = await axios.post(url, data, { headers });
         const embedding = response.data.data[0].embedding;
-        return tf.tensor(embedding);
+        return embedding;
     } catch (error) {
         console.error("Error while getting embedding:", error);
         throw new Error("Failed to get embedding from OpenAI API");
@@ -99,17 +98,17 @@ async function moodToEmbedding(mood: string): Promise<tf.Tensor> {
 class KNNAffirmationRetriever {
     moodEmbeddings: MoodEmbeddings;
     moodAffirmations: MoodAffirmations;
-    embeddings: tf.Tensor;
+    embeddings: number[][];
     moodLabels: string[];
     knnModel: KNearestNeighbors;
 
     constructor(moodEmbeddings: MoodEmbeddings, moodAffirmations: MoodAffirmations) {
         this.moodEmbeddings = moodEmbeddings;
         this.moodAffirmations = moodAffirmations;
-        this.embeddings = tf.stack(Object.values(moodEmbeddings).map((values: number[]) => tf.tensor(values)));
+        this.embeddings = Object.values(moodEmbeddings);
         this.moodLabels = Object.keys(moodEmbeddings);
 
-        const dataPoints: DataPoint[] = (this.embeddings.arraySync() as number[][]).map((features: number[], index: number) => ({
+        const dataPoints: DataPoint[] = this.embeddings.map((features: number[], index: number) => ({
             features,
             label: this.moodLabels[index],
         }));
@@ -120,7 +119,7 @@ class KNNAffirmationRetriever {
     async getAffirmation(mood: string): Promise<string> {
         const moodEmbedding = await moodToEmbedding(mood);
         // Predict the closest mood using the KNN model
-        const closestMood = this.knnModel.predict((moodEmbedding.arraySync() as number[]));
+        const closestMood = this.knnModel.predict((moodEmbedding as number[]));
 
         // Access the affirmation using the closest mood
         const affirmation = this.moodAffirmations[closestMood];
