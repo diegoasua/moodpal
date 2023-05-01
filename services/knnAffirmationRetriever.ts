@@ -69,7 +69,7 @@ const moodAffirmations: MoodAffirmations = loadMoodAffirmations("mood_affirmatio
 
 function loadMoodEmbeddings(filename: string): MoodEmbeddings {
     const rawData = fs.readFileSync(filename);
-    return JSON.parse(rawData);
+    return JSON.parse(rawData.toString());
 }
 
 function loadMoodAffirmations(filePath: string): MoodAffirmations {
@@ -106,25 +106,27 @@ class KNNAffirmationRetriever {
     constructor(moodEmbeddings: MoodEmbeddings, moodAffirmations: MoodAffirmations) {
         this.moodEmbeddings = moodEmbeddings;
         this.moodAffirmations = moodAffirmations;
-        this.embeddings = tf.stack(Object.values(moodEmbeddings).map(values => tf.tensor(values)));
+        this.embeddings = tf.stack(Object.values(moodEmbeddings).map((values: number[]) => tf.tensor(values)));
         this.moodLabels = Object.keys(moodEmbeddings);
 
-        const dataPoints: DataPoint[] = this.embeddings.arraySync().map((features, index) => ({
+        const dataPoints: DataPoint[] = (this.embeddings.arraySync() as number[][]).map((features: number[], index: number) => ({
             features,
             label: this.moodLabels[index],
         }));
         this.knnModel = new KNearestNeighbors(1, dataPoints);
     }
 
+
     async getAffirmation(mood: string): Promise<string> {
         const moodEmbedding = await moodToEmbedding(mood);
         // Predict the closest mood using the KNN model
-        const closestMood = this.knnModel.predict(moodEmbedding.arraySync());
+        const closestMood = this.knnModel.predict((moodEmbedding.arraySync() as number[]));
 
         // Access the affirmation using the closest mood
         const affirmation = this.moodAffirmations[closestMood];
         return affirmation;
     }
+
 }
 
 const moodEmbeddings: MoodEmbeddings = loadMoodEmbeddings("knn_model/mood_embeddings.json");
